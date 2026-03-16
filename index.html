@@ -4,16 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moodboard Scroll</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: #f9f9f7;
       overflow-x: clip;
-      font-family: 'Work Sans', sans-serif;
+      font-family: system-ui, sans-serif;
     }
 
     #board {
@@ -27,7 +24,7 @@
       width: auto;
       padding: 0;
       text-align: left;
-      z-index: 1;
+      z-index: 30;
     }
 
     .about-name {
@@ -69,8 +66,6 @@
     }
 
     .item {
-      position: relative;
-      z-index: 2;
       display: block;
       width: fit-content;
       opacity: 0;
@@ -172,11 +167,27 @@
 
   function rand(min, max) { return Math.random() * (max - min) + min; }
 
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  }
+
   var board = document.getElementById('board');
+  var displayedImages = [];
 
   projects.forEach(function(project, pi) {
     var side = pi % 2 === 0 ? 'left' : 'right';
     var tx = side === 'left' ? '-100vw' : '100vw';
+    var ordered = shuffle(project.images.map(function(filename, idx) {
+      return { filename: filename, originalIndex: idx };
+    }));
+    displayedImages[pi] = ordered.map(function(photo) { return photo.filename; });
 
     if (pi > 0) {
       var spacer = document.createElement('div');
@@ -184,15 +195,22 @@
       board.appendChild(spacer);
     }
 
-    project.images.forEach(function(filename, ii) {
-      var widthVW  = rand(28, 45);
-      var offsetVW = rand(3, 38);
+    ordered.forEach(function(photo, ii) {
+      var filename = photo.filename;
+      var isSecondRow = ii % 2 === 1;
+      var widthVW  = isSecondRow ? rand(20, 32) : rand(30, 45);
+      var offsetVW = isSecondRow ? rand(16, 40) : rand(3, 18);
 
       var item = document.createElement('figure');
       item.className = 'item ' + side;
       item.style.setProperty('--tx', tx);
       item.style.width = widthVW + 'vw';
-      item.style.marginBottom = rand(40, 110) + 'px';
+      item.style.marginBottom = isSecondRow ? rand(10, 40) + 'px' : rand(34, 78) + 'px';
+
+      // Pull the "second row" image slightly upward so two images can coexist in view.
+      if (isSecondRow) {
+        item.style.marginTop = '-' + rand(8, 18) + 'vh';
+      }
 
       if (side === 'left') {
         item.style.marginLeft = offsetVW + 'vw';
@@ -238,9 +256,10 @@
 
   function showModal() {
     var p = projects[curProject];
-    modalImg.src = p.images[curImg];
+    var imgs = displayedImages[curProject] || p.images;
+    modalImg.src = imgs[curImg];
     modalImg.alt = p.name + ' ' + (curImg + 1);
-    modalInfo.textContent = p.name + '  ' + (curImg + 1) + ' / ' + p.images.length;
+    modalInfo.textContent = p.name + '  ' + (curImg + 1) + ' / ' + imgs.length;
   }
 
   function openGallery(pi, ii) {
@@ -261,15 +280,15 @@
 
   modalPrev.addEventListener('click', function(e) {
     e.stopPropagation();
-    var p = projects[curProject];
-    curImg = (curImg - 1 + p.images.length) % p.images.length;
+    var imgs = displayedImages[curProject] || projects[curProject].images;
+    curImg = (curImg - 1 + imgs.length) % imgs.length;
     showModal();
   });
 
   modalNext.addEventListener('click', function(e) {
     e.stopPropagation();
-    var p = projects[curProject];
-    curImg = (curImg + 1) % p.images.length;
+    var imgs = displayedImages[curProject] || projects[curProject].images;
+    curImg = (curImg + 1) % imgs.length;
     showModal();
   });
 
