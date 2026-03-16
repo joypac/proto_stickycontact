@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moodboard Scroll</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f9f9f7;
+      overflow-x: clip;
+      font-family: 'Work Sans', sans-serif;
+    }
+
+    #board {
+      padding: 20vh 0 20vh;
+    }
+
+    #about-contact {
+      position: fixed;
+      left: clamp(16px, 4vw, 56px);
+      bottom: clamp(18px, 5vh, 48px);
+      width: auto;
+      padding: 0;
+      text-align: left;
+      z-index: 1;
+    }
+
+    .about-name {
+      font-size: clamp(1.1rem, 2.1vw, 1.65rem);
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+
+    .about-role {
+      margin-top: 0.25rem;
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      line-height: 1.2;
+      color: #3e3e3e;
+    }
+
+    .about-email {
+      display: inline-block;
+      margin-top: 1rem;
+      color: #181818;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,0,0,0.35);
+      padding-bottom: 0.2rem;
+      font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+      letter-spacing: 0.01em;
+    }
+
+    .about-email:hover {
+      border-bottom-color: rgba(0,0,0,0.9);
+    }
+
+    @media (max-width: 720px) {
+      #about-contact {
+        left: clamp(14px, 4vw, 24px);
+        bottom: 12px;
+        width: auto;
+        transform: none;
+        padding: 0;
+      }
+    }
+
+    .item {
+      position: relative;
+      z-index: 2;
+      display: block;
+      width: fit-content;
+      opacity: 0;
+      cursor: pointer;
+      transform: translateX(var(--tx, -100vw));
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity  0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .item.left  { margin-right: auto; }
+    .item.right { margin-left: auto; }
+
+    .item.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .item img {
+      display: block;
+      width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.13);
+    }
+
+    #modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal.open { display: flex; }
+
+    #modal-img {
+      max-width: 90vw;
+      max-height: 88vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    #modal-close {
+      position: absolute;
+      top: 18px; right: 22px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+    }
+
+    #modal-prev, #modal-next {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      font-size: 2.4rem;
+      cursor: pointer;
+      padding: 0.3em 0.6em;
+      border-radius: 4px;
+    }
+    #modal-prev { left: 16px; }
+    #modal-next { right: 16px; }
+
+    #modal-info {
+      position: absolute;
+      bottom: 18px;
+      left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.65);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<div id="board"></div>
+
+<section id="about-contact" aria-label="Sobre Miguel Ortigao">
+  <p class="about-name">MIGUEL ORTIG&Atilde;O</p>
+  <p class="about-role">arquitectura</p>
+  <a class="about-email" href="mailto:mo@miguelortigao.com">mo@miguelortigao.com</a>
+</section>
+
+<div id="modal">
+  <button id="modal-close">&#x2715;</button>
+  <button id="modal-prev">&#8249;</button>
+  <img id="modal-img" src="" alt="" />
+  <button id="modal-next">&#8250;</button>
+  <div id="modal-info"></div>
+</div>
+
+<script>
+  var projects = [
+    { name: 'mustique', images: ['mustique1.jpg','mustique2.jpg','mustique3.jpg','mustique4.jpg','mustique5.jpg'] },
+    { name: 'fairly',   images: ['fairly1.jpg','fairly2.jpg','fairly3.jpg','fairly4.jpg','fairly5.jpg','fairly6.jpg'] },
+    { name: 'paes',     images: ['paez1.jpg','paez2.jpg','paez3.jpg','paez4.jpg','paez5.jpg'] }
+  ];
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+
+  var board = document.getElementById('board');
+
+  projects.forEach(function(project, pi) {
+    var side = pi % 2 === 0 ? 'left' : 'right';
+    var tx = side === 'left' ? '-100vw' : '100vw';
+
+    if (pi > 0) {
+      var spacer = document.createElement('div');
+      spacer.style.height = '20vh';
+      board.appendChild(spacer);
+    }
+
+    project.images.forEach(function(filename, ii) {
+      var widthVW  = rand(28, 45);
+      var offsetVW = rand(3, 38);
+
+      var item = document.createElement('figure');
+      item.className = 'item ' + side;
+      item.style.setProperty('--tx', tx);
+      item.style.width = widthVW + 'vw';
+      item.style.marginBottom = rand(40, 110) + 'px';
+
+      if (side === 'left') {
+        item.style.marginLeft = offsetVW + 'vw';
+      } else {
+        item.style.marginRight = offsetVW + 'vw';
+      }
+
+      var img = document.createElement('img');
+      img.src = filename;
+      img.alt = project.name + ' ' + (ii + 1);
+      item.appendChild(img);
+      board.appendChild(item);
+
+      item.addEventListener('click', function() { openGallery(pi, ii); });
+    });
+  });
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      } else {
+        entry.target.classList.remove('visible');
+      }
+    });
+  }, {
+    threshold: 0,
+    // Expand root bounds left/right so translated items can still be observed.
+    rootMargin: '0px 120% 0px 120%'
+  });
+
+  document.querySelectorAll('.item').forEach(function(el) {
+    observer.observe(el);
+  });
+
+  var modal      = document.getElementById('modal');
+  var modalImg   = document.getElementById('modal-img');
+  var modalInfo  = document.getElementById('modal-info');
+  var modalClose = document.getElementById('modal-close');
+  var modalPrev  = document.getElementById('modal-prev');
+  var modalNext  = document.getElementById('modal-next');
+  var curProject = 0, curImg = 0;
+
+  function showModal() {
+    var p = projects[curProject];
+    modalImg.src = p.images[curImg];
+    modalImg.alt = p.name + ' ' + (curImg + 1);
+    modalInfo.textContent = p.name + '  ' + (curImg + 1) + ' / ' + p.images.length;
+  }
+
+  function openGallery(pi, ii) {
+    curProject = pi;
+    curImg = ii;
+    showModal();
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeGallery() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  modalClose.addEventListener('click', closeGallery);
+  modal.addEventListener('click', function(e) { if (e.target === modal) closeGallery(); });
+
+  modalPrev.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var p = projects[curProject];
+    curImg = (curImg - 1 + p.images.length) % p.images.length;
+    showModal();
+  });
+
+  modalNext.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var p = projects[curProject];
+    curImg = (curImg + 1) % p.images.length;
+    showModal();
+  });
+
+  window.addEventListener('keydown', function(e) {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'ArrowLeft')  modalPrev.click();
+    if (e.key === 'ArrowRight') modalNext.click();
+    if (e.key === 'Escape')     closeGallery();
+  });
+</script>
+</body>
+</html>
