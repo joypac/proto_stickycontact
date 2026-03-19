@@ -4,17 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moodboard Scroll</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: #f9f9f7;
       overflow-x: clip;
-      font-family: system-ui, sans-serif;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
     }
 
     #board {
       padding: 20vh 0 20vh;
+      position: relative;
+      z-index: 2;
     }
 
     #about-contact {
@@ -24,7 +29,7 @@
       width: auto;
       padding: 0;
       text-align: left;
-      z-index: 30;
+      z-index: 1;
     }
 
     .about-name {
